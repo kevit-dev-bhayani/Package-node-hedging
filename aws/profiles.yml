@@ -1,0 +1,10 @@
+profiles:
+  - name: dev
+    account: '033840031464'
+    role: CICD
+  - name: qa
+    account: '015533160597'
+    role: CICD
+  - name: prod
+    account: '401965510781'
+    role: CICD

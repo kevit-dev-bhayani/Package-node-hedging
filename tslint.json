@@ -1,0 +1,18 @@
+{
+  "extends": [
+    "tslint:recommended",
+    "tslint-config-prettier"
+  ],
+  "rules": {
+    "max-classes-per-file": [
+      true,
+      4
+    ],
+    "variable-name": [
+      true,
+      "allow-leading-underscore",
+      "allow-snake-case",
+      "allow-pascal-case"
+    ]
+  }
+}

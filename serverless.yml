@@ -1,0 +1,42 @@
+service: sustainabilty-data-model
+frameworkVersion: '3'
+
+useDotenv: true
+
+package:
+  individually: true
+  exclude:
+    - aws/**
+    - test/**
+    - README.md
+    - serverless.yml
+    - package.json
+    - package-lock.json
+# plugins:
+#   - serverless-plugin-bind-deployment-id
+#   - serverless-offline
+#   - serverless-deployment-bucket
+# - serverless-plugin-warmup
+
+# package:
+#   individually: true
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  # environment: ${file(./aws/envs/cloud.yml):environment}
+  versionFunctions: false
+  endpointType: regional
+  stage: ${opt:stage, 'local'}
+  region: ${opt:region, 'us-east-2'}
+  iamRoleStatements:
+    - '${file(./aws/iamroles/permissions.yml)}'
+    - '${file(./aws/iamroles/translate-permissions.yml)}'
+
+functions:
+  runMigration:
+    name: run-migration
+    description: Run migrations
+    handler: dist/handler/runMigration.main
+    timeout: 900
+    vpc: ${file(./aws/serverless/serverless-config-${self:provider.stage}.yml):vpc}

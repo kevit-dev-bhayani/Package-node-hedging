@@ -1,0 +1,30 @@
+environment:
+  SERVICE: ${self:service}
+  STAGE: ${self:provider.stage}
+  STACK: ${self:provider.Tags.name}
+  V1_API_URL: https://${self:provider.Tags.name}-api.sustainability.cropwise.com/sustainability
+  BASE_URL: ${self:custom.base_url.${self:provider.stage}}
+  # DYNAMODB_PLANS: ${self:provider.Tags.name}-plans
+  # DYNAMODB_ACTIVITIES: ${self:provider.Tags.name}-activities
+  # DYNAMODB_GEOSPATIALPLANS: ${self:provider.Tags.name}-geoSpatialPlans
+  # DYNAMODB_ZIPCODE: ${self:provider.Tags.name}-zipcodes
+  # DYNAMODB_PENDING_QUESTION_GROUPS: ${self:provider.Tags.name}-pending-question-groups
+  # DYNAMODB_QUESTION_GROUPS: ${self:provider.Tags.name}-question-groups
+  # DYNAMODB_ANSWERS: ${self:provider.Tags.name}-answers
+  # DYNAMODB_GEOSPATIALANSWERS: ${self:provider.Tags.name}-geoSpatialAnswers
+  # DYNAMODB_CROPQUESTIONSETS: ${self:provider.Tags.name}-crop-question-sets
+  # DYNAMODB_COMMUNITYPERFORMANCE: ${self:provider.Tags.name}-community-performance
+  # DYNAMODB_PARTNERS: ${self:provider.Tags.name}-partners
+  # DYNAMODB_PRACTICE_QUESTIONS: ${self:provider.Tags.name}-practice-questions
+  # DYNAMODB_PENDING_PRACTICE_QUESTIONS: ${self:provider.Tags.name}-pending-practice-questions
+  # DYNAMODB_ALL_QUESTIONS: ${self:provider.Tags.name}-all-questions
+  # DYNAMODB_USER_ACTIVITY_SCORE: ${self:provider.Tags.name}-user-activity-score
+  # DYNAMODB_CROP_PERFORMANCE: ${self:provider.Tags.name}-crop-performance
+cors:
+  origin: '*'
+  allowCredentials: false
+  headers:
+    - Content-Type
+    - x-master-key
+    - x-api-key
+    - Authorization

@@ -1,0 +1,6 @@
+vpc:
+  securityGroupIds:
+    - Ref: WebAccessSG
+  subnetIds:
+    - Ref: PrivateSubnet1
+    - Ref: PrivateSubnet2

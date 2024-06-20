@@ -1,0 +1,201 @@
+version: 2.1
+
+orbs:
+  aws-cli: circleci/aws-cli@1.2.1
+
+executors:
+  node-machine:
+    docker:
+      - image: cimg/node:18.16.0
+
+commands:
+  # Model Export
+  dev-setup:
+    steps:
+      - run:
+          name: Set stage as dev
+          command: |
+            echo "export DEPLOY_STAGE=dev" >> $BASH_ENV
+            echo $DB_HOST # this env var must be set within the project
+            source $BASH_ENV
+
+  stage-setup:
+    steps:
+      - run:
+          name: Set stage
+          command: |
+            STAGE=$(echo $CIRCLE_TAG | cut -f1 -d'/')
+            echo "export DEPLOY_STAGE=$STAGE" >> $BASH_ENV
+            source $BASH_ENV
+
+  package-install:
+    steps:
+      - run:
+          name: Install Dependencies
+          command: |
+            sudo npm i -g serverless@3.24.1 --prefer-offline --no-audit --progress=false 
+            npm install
+
+  build-data-model:
+    steps:
+      - run:
+          name: Run build for data model
+          command: |
+            npm run build:model
+
+  deploy-data-model:
+    steps:
+      - run:
+          name: Deploy to GemFury
+          command: |
+            DATA_MODEL_PATH='data-model-package' 
+            mkdir $DATA_MODEL_PATH
+            cp -r lib $DATA_MODEL_PATH
+            cp package.json README.md $DATA_MODEL_PATH
+            cd $DATA_MODEL_PATH
+            # version=`echo '<< pipeline.git.tag >>'`
+            # npm version $version --no-git-tag-version
+            npm pkg delete scripts.prepare
+            npm pack
+            PACKAGE_NAME='cropwise-sustainability-data-models'
+            PACKAGE_FILE=$(ls | grep $PACKAGE_NAME)
+            curl -F package=@$PACKAGE_FILE https://${FURY_PKG_AUTH}@push.fury.io/syngenta-digital/
+
+  # Serverless
+  aws-profiles:
+    steps:
+      - run:
+          name: AWS profile
+          command: npx @syngenta-digital/acp --file aws/profiles.yml
+
+  build-serverless:
+    steps:
+      - run:
+          name: Run build for serverless
+          command: |
+            npm run build:serverless
+            npm run serverless -- package --stage $DEPLOY_STAGE --region us-east-2 --aws-profile $DEPLOY_STAGE
+
+  sls-package-s3-upload:
+    steps:
+      - run:
+          name: S3 package upload
+          command: |
+            aws s3 sync .serverless s3://syngenta-cicd-build-artifacts/$CIRCLE_PROJECT_REPONAME/$DEPLOY_STAGE/$CIRCLE_SHA1
+            $(rm -rf .serverless)
+
+  s3-download-sls-deploy:
+    steps:
+      - run:
+          name: S3 package download
+          command: |
+            $(mkdir .serverless)
+            aws s3 sync s3://syngenta-cicd-build-artifacts/$CIRCLE_PROJECT_REPONAME/$DEPLOY_STAGE/$CIRCLE_SHA1 .serverless
+
+  deploy-serverless:
+    steps:
+      - run:
+          name: Run deployment for serverless
+          command: |
+            echo $(ls -a)
+            npm run serverless -- deploy --package .serverless --stage $DEPLOY_STAGE --region us-east-2 --aws-profile $DEPLOY_STAGE
+
+  run-migration:
+    steps:
+      - run: sleep 2
+      - run: echo 'Invoking lambda to run migrations ...'
+      - run: npm run serverless -- invoke --function runMigration_v1_v2 --data v1 --stage $DEPLOY_STAGE --region us-east-2 --aws-profile $DEPLOY_STAGE
+      # - run: npm run serverless -- invoke --function runMigration_v1_v2 --data v2 --stage $DEPLOY_STAGE --region us-east-2 --aws-profile $DEPLOY_STAGE
+
+jobs:
+  build:
+    executor: node-machine
+    environment:
+      NODE_ENV: test
+      DB_HOST: localhost
+    steps:
+      - checkout
+      - dev-setup
+      - package-install
+      - build-data-model
+      - aws-cli/setup
+      - aws-profiles
+      - build-serverless
+
+  install-build-deploy-dev:
+    executor: node-machine
+    environment:
+      NODE_ENV: test
+      DB_HOST: localhost
+    steps:
+      - checkout
+      - dev-setup
+      - package-install
+      - build-data-model
+      - deploy-data-model
+      - aws-cli/setup
+      - aws-profiles
+      - build-serverless
+      - sls-package-s3-upload
+      - s3-download-sls-deploy
+      - deploy-serverless
+      - run-migration
+
+  install-build-deploy:
+    executor: node-machine
+    environment:
+      NODE_ENV: test
+    steps:
+      - checkout
+      - stage-setup
+      - package-install
+      - build-data-model
+      - deploy-data-model
+      - aws-cli/setup
+      - aws-profiles
+      - build-serverless
+      - sls-package-s3-upload
+      - s3-download-sls-deploy
+      - deploy-serverless
+      - run-migration
+
+workflows:
+  build:
+    jobs:
+      - build:
+          context:
+            - cropwise-sustainability-cicd
+            - shared-gemfury-tokens
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              ignore:
+                - dev
+                - main
+
+  dev-deployment:
+    jobs:
+      - install-build-deploy-dev:
+          context:
+            - cropwise-sustainability-cicd
+            - shared-gemfury-tokens
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only:
+                - main
+                - dev
+
+  deployment:
+    jobs:
+      - install-build-deploy:
+          context:
+            - cropwise-sustainability-cicd
+            - shared-gemfury-tokens
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore: /.*/

@@ -1,0 +1,10 @@
+node_modules/
+lib/
+.env
+
+# Serverless directories
+.serverless
+.esbuild
+# serverless-config-local.yml
+.webpack
+dist

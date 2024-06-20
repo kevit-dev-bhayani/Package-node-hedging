@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "extendedDiagnostics": true,
+    "target": "es6",
+    "module": "commonjs",
+    "lib": ["es5", "es6", "dom"],
+    "declaration": true,
+    "moduleResolution": "node",
+    "noEmitOnError": false,
+    "outDir": "lib/",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": false,
+    "emitDeclarationOnly": false,
+    "incremental": true,
+    "noResolve": false,
+    "noImplicitAny": true,
+    "sourceMap": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/index.ts"],
+  "exclude": ["node_modules"]
+}

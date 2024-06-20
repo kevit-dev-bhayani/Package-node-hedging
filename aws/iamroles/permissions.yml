@@ -1,0 +1,23 @@
+Effect: Allow
+Action:
+  - 'secretsmanager:GetSecretValue'
+  - 'secretsmanager:DescribeSecret'
+  - 'secretsmanager:ListSecretVersionIds'
+  - 'secretsmanager:PutSecretValue'
+  - 'secretsmanager:UpdateSecret'
+  - 'secretsmanager:TagResource'
+  - 'secretsmanager:UntagResource'
+  - 'lambda:InvokeAsync'
+  - 'lambda:InvokeFunction'
+  # - 'sqs:GetQueueUrl'
+  # - 'sqs:ListQueues'
+  # - 'sqs:ListQueueTags'
+  # - 'sqs:SendMessage'
+  # - 'sqs:SendMessageBatch'
+  # - 'sqs:DeleteMessage'
+  # - 'sqs:GetQueueAttributes'
+  # - 'sqs:ReceiveMessage'
+Resource:
+  - 'arn:aws:secretsmanager:*:*:secret:*'
+  - 'arn:aws:lambda:us-east-2:*:*'
+  - 'arn:aws:sqs:us-east-2:*:*'
